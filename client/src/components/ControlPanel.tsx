@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, Square, Download, Volume2 } from "lucide-react";
+import { Play, Pause, Square, Download, Volume2, Repeat } from "lucide-react";
 
 interface ControlPanelProps {
   isPlaying: boolean;
@@ -11,6 +11,8 @@ interface ControlPanelProps {
   onVolumeChange: (value: number) => void;
   currentTime: number;
   duration: number;
+  isLooping: boolean;
+  onLoopToggle: () => void;
 }
 
 export default function ControlPanel({
@@ -22,6 +24,8 @@ export default function ControlPanel({
   onVolumeChange,
   currentTime,
   duration,
+  isLooping,
+  onLoopToggle,
 }: ControlPanelProps) {
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -55,6 +59,15 @@ export default function ControlPanel({
               data-testid="button-stop"
             >
               <Square className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={isLooping ? "default" : "outline"}
+              onClick={onLoopToggle}
+              className="toggle-elevate"
+              data-testid="button-loop-toggle"
+            >
+              <Repeat className="h-4 w-4" />
             </Button>
           </div>
 
