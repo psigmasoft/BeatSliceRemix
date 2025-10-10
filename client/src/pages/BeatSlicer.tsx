@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import Header from "@/components/Header";
 import AudioUploader from "@/components/AudioUploader";
-import WaveformDisplay from "@/components/WaveformDisplay";
-import SliceManager, { Slice } from "@/components/SliceManager";
+import WaveformDisplay, { Slice } from "@/components/WaveformDisplay";
 import ControlPanel from "@/components/ControlPanel";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +11,7 @@ export default function BeatSlicer() {
   const [slices, setSlices] = useState<Slice[]>([]);
   const [selectedSliceId, setSelectedSliceId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
   
@@ -96,15 +96,18 @@ export default function BeatSlicer() {
       const source = audioContextRef.current.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(gainNodeRef.current!);
+      source.loop = isLooping;
       
       startTimeRef.current = audioContextRef.current.currentTime - pauseTimeRef.current;
       source.start(0, pauseTimeRef.current);
       sourceNodeRef.current = source;
       
       source.onended = () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-        pauseTimeRef.current = 0;
+        if (!isLooping) {
+          setIsPlaying(false);
+          setCurrentTime(0);
+          pauseTimeRef.current = 0;
+        }
       };
       
       setIsPlaying(true);
@@ -119,6 +122,13 @@ export default function BeatSlicer() {
     setIsPlaying(false);
     setCurrentTime(0);
     pauseTimeRef.current = 0;
+  };
+
+  const handleLoopToggle = () => {
+    setIsLooping(!isLooping);
+    if (sourceNodeRef.current) {
+      sourceNodeRef.current.loop = !isLooping;
+    }
   };
 
   const handleExport = () => {
@@ -137,22 +147,32 @@ export default function BeatSlicer() {
     }, 1500);
   };
 
+  const handleSliceDelete = (id: string) => {
+    setSlices(slices.filter(s => s.id !== id));
+    if (selectedSliceId === id) {
+      setSelectedSliceId(null);
+    }
+  };
+
   useEffect(() => {
     if (!isPlaying || !audioContextRef.current) return;
 
     const interval = setInterval(() => {
       const elapsed = audioContextRef.current!.currentTime - startTimeRef.current;
-      setCurrentTime(elapsed);
-      
-      if (audioBuffer && elapsed >= audioBuffer.duration) {
-        handleStop();
+      if (audioBuffer) {
+        if (isLooping) {
+          setCurrentTime(elapsed % audioBuffer.duration);
+        } else {
+          setCurrentTime(elapsed);
+          if (elapsed >= audioBuffer.duration) {
+            handleStop();
+          }
+        }
       }
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isPlaying, audioBuffer]);
-
-  const slicePoints = slices.map(s => s.startTime);
+  }, [isPlaying, audioBuffer, isLooping]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -186,16 +206,13 @@ export default function BeatSlicer() {
               
               <WaveformDisplay
                 audioBuffer={audioBuffer}
-                slicePoints={slicePoints}
+                slices={slices}
                 currentTime={currentTime}
                 duration={audioBuffer?.duration || 0}
-              />
-              
-              <SliceManager
-                slices={slices}
-                onSlicesChange={setSlices}
                 selectedSliceId={selectedSliceId}
                 onSelectSlice={setSelectedSliceId}
+                onSlicesReorder={setSlices}
+                onSliceDelete={handleSliceDelete}
               />
             </>
           )}
@@ -212,6 +229,8 @@ export default function BeatSlicer() {
           onVolumeChange={setVolume}
           currentTime={currentTime}
           duration={audioBuffer?.duration || 0}
+          isLooping={isLooping}
+          onLoopToggle={handleLoopToggle}
         />
       )}
     </div>
