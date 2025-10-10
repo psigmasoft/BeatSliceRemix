@@ -1,4 +1,5 @@
-import WaveformDisplay from '../WaveformDisplay';
+import { useState } from 'react';
+import WaveformDisplay, { Slice } from '../WaveformDisplay';
 
 export default function WaveformDisplayExample() {
   const mockAudioBuffer = {
@@ -17,12 +18,24 @@ export default function WaveformDisplayExample() {
     copyToChannel: () => {},
   } as unknown as AudioBuffer;
 
+  const [slices, setSlices] = useState<Slice[]>([
+    { id: '1', sliceNumber: 1, duration: 0.25, startTime: 0, endTime: 0.25 },
+    { id: '2', sliceNumber: 2, duration: 0.25, startTime: 0.25, endTime: 0.5 },
+    { id: '3', sliceNumber: 3, duration: 0.25, startTime: 0.5, endTime: 0.75 },
+    { id: '4', sliceNumber: 4, duration: 0.25, startTime: 0.75, endTime: 1.0 },
+  ]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   return (
     <WaveformDisplay
       audioBuffer={mockAudioBuffer}
-      slicePoints={[0.2, 0.4, 0.6, 0.8]}
+      slices={slices}
       currentTime={0.3}
       duration={1.0}
+      selectedSliceId={selectedId}
+      onSelectSlice={setSelectedId}
+      onSlicesReorder={setSlices}
+      onSliceDelete={(id) => setSlices(slices.filter(s => s.id !== id))}
     />
   );
 }
