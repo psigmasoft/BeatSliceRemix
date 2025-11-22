@@ -19,10 +19,10 @@ export default function WaveformDisplayExample() {
   } as unknown as AudioBuffer;
 
   const [slices, setSlices] = useState<Slice[]>([
-    { id: '1', sliceNumber: 1, sliceLabel: 'A', colorHue: 0, duration: 0.25, startTime: 0, endTime: 0.25 },
-    { id: '2', sliceNumber: 2, sliceLabel: 'B', colorHue: 45, duration: 0.25, startTime: 0.25, endTime: 0.5 },
-    { id: '3', sliceNumber: 3, sliceLabel: 'C', colorHue: 90, duration: 0.25, startTime: 0.5, endTime: 0.75 },
-    { id: '4', sliceNumber: 4, sliceLabel: 'D', colorHue: 135, duration: 0.25, startTime: 0.75, endTime: 1.0 },
+    { id: '1', sliceNumber: 1, colorHue: 0, duration: 0.25, startTime: 0, endTime: 0.25 },
+    { id: '2', sliceNumber: 2, colorHue: 45, duration: 0.25, startTime: 0.25, endTime: 0.5 },
+    { id: '3', sliceNumber: 3, colorHue: 90, duration: 0.25, startTime: 0.5, endTime: 0.75 },
+    { id: '4', sliceNumber: 4, colorHue: 135, duration: 0.25, startTime: 0.75, endTime: 1.0 },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -33,7 +33,13 @@ export default function WaveformDisplayExample() {
     const newSlice = { ...slices[sliceIndex], id: `${slices[sliceIndex].id}-dup` };
     const newSlices = [...slices];
     newSlices.splice(sliceIndex + 1, 0, newSlice);
-    setSlices(newSlices);
+    
+    // Update slice numbers for all slices
+    const updatedSlices = newSlices.map((slice, index) => ({
+      ...slice,
+      sliceNumber: index + 1,
+    }));
+    setSlices(updatedSlices);
   };
 
   return (

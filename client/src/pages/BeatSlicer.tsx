@@ -65,7 +65,6 @@ export default function BeatSlicer() {
         newSlices.push({
           id: `slice-${i}`,
           sliceNumber: i + 1,
-          sliceLabel: getSliceLabel(i),
           colorHue: hue,
           duration: sliceDuration,
           startTime: i * sliceDuration,
@@ -193,19 +192,10 @@ export default function BeatSlicer() {
     }
   };
 
-  const getSliceLabel = (index: number): string => {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (index < letters.length) {
-      return letters[index];
-    }
-    return `${letters[index % letters.length]}${Math.floor(index / letters.length)}`;
-  };
-
   const updateSliceNumbers = (sliceArray: Slice[]) => {
     return sliceArray.map((slice, index) => ({
       ...slice,
       sliceNumber: index + 1,
-      sliceLabel: getSliceLabel(index),
     }));
   };
 
