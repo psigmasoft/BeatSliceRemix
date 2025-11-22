@@ -190,8 +190,16 @@ export default function BeatSlicer() {
     }
   };
 
+  const updateSliceNumbers = (sliceArray: Slice[]) => {
+    return sliceArray.map((slice, index) => ({
+      ...slice,
+      sliceNumber: index + 1,
+    }));
+  };
+
   const handleSliceDelete = (id: string) => {
-    setSlices(slices.filter(s => s.id !== id));
+    const filtered = slices.filter(s => s.id !== id);
+    setSlices(updateSliceNumbers(filtered));
     if (selectedSliceId === id) {
       setSelectedSliceId(null);
     }
@@ -209,7 +217,7 @@ export default function BeatSlicer() {
     
     const newSlices = [...slices];
     newSlices.splice(sliceIndex + 1, 0, newSlice);
-    setSlices(newSlices);
+    setSlices(updateSliceNumbers(newSlices));
   };
 
   useEffect(() => {
@@ -271,7 +279,7 @@ export default function BeatSlicer() {
                 duration={audioBuffer?.duration || 0}
                 selectedSliceId={selectedSliceId}
                 onSelectSlice={setSelectedSliceId}
-                onSlicesReorder={setSlices}
+                onSlicesReorder={(newSlices) => setSlices(updateSliceNumbers(newSlices))}
                 onSliceDelete={handleSliceDelete}
                 onSliceDuplicate={handleSliceDuplicate}
               />
