@@ -156,7 +156,7 @@ export default function WaveformDisplay({
           data-testid="canvas-waveform"
         />
         
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0">
           <div className="relative w-full h-full">
             {slices.map((slice, index) => {
               const pos = getSlicePosition(index);
@@ -174,7 +174,7 @@ export default function WaveformDisplay({
                   onDragEnd={handleDragEnd}
                   onClick={() => onSelectSlice(slice.id)}
                   className={`
-                    absolute top-0 h-full border-2 cursor-move pointer-events-auto
+                    absolute top-0 h-full border-2 cursor-move
                     transition-all duration-150
                     ${isSelected ? 'border-chart-3 bg-chart-3/10' : 'border-accent/40 bg-accent/5'}
                     ${isDragging ? 'opacity-40' : ''}
