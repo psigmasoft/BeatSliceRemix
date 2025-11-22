@@ -197,6 +197,21 @@ export default function BeatSlicer() {
     }
   };
 
+  const handleSliceDuplicate = (id: string) => {
+    const sliceIndex = slices.findIndex(s => s.id === id);
+    if (sliceIndex === -1) return;
+    
+    const sliceToDuplicate = slices[sliceIndex];
+    const newSlice: Slice = {
+      ...sliceToDuplicate,
+      id: `${sliceToDuplicate.id}-dup-${Date.now()}`,
+    };
+    
+    const newSlices = [...slices];
+    newSlices.splice(sliceIndex + 1, 0, newSlice);
+    setSlices(newSlices);
+  };
+
   useEffect(() => {
     if (!isPlaying || !audioContextRef.current) return;
 
@@ -258,6 +273,7 @@ export default function BeatSlicer() {
                 onSelectSlice={setSelectedSliceId}
                 onSlicesReorder={setSlices}
                 onSliceDelete={handleSliceDelete}
+                onSliceDuplicate={handleSliceDuplicate}
               />
             </>
           )}

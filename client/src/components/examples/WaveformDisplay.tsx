@@ -26,6 +26,16 @@ export default function WaveformDisplayExample() {
   ]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const handleDuplicate = (id: string) => {
+    const sliceIndex = slices.findIndex(s => s.id === id);
+    if (sliceIndex === -1) return;
+    
+    const newSlice = { ...slices[sliceIndex], id: `${slices[sliceIndex].id}-dup` };
+    const newSlices = [...slices];
+    newSlices.splice(sliceIndex + 1, 0, newSlice);
+    setSlices(newSlices);
+  };
+
   return (
     <WaveformDisplay
       audioBuffer={mockAudioBuffer}
@@ -36,6 +46,7 @@ export default function WaveformDisplayExample() {
       onSelectSlice={setSelectedId}
       onSlicesReorder={setSlices}
       onSliceDelete={(id) => setSlices(slices.filter(s => s.id !== id))}
+      onSliceDuplicate={handleDuplicate}
     />
   );
 }

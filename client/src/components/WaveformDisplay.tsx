@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GripVertical, X } from "lucide-react";
+import { GripVertical, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface Slice {
@@ -19,6 +19,7 @@ interface WaveformDisplayProps {
   onSelectSlice: (id: string | null) => void;
   onSlicesReorder: (slices: Slice[]) => void;
   onSliceDelete: (id: string) => void;
+  onSliceDuplicate: (id: string) => void;
 }
 
 export default function WaveformDisplay({
@@ -30,6 +31,7 @@ export default function WaveformDisplay({
   onSelectSlice,
   onSlicesReorder,
   onSliceDelete,
+  onSliceDuplicate,
 }: WaveformDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -190,18 +192,32 @@ export default function WaveformDisplay({
                     <GripVertical className="h-8 w-8 text-foreground" />
                   </div>
 
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-1 right-1 h-6 w-6 text-destructive hover:text-destructive opacity-0 hover:opacity-100 transition-opacity z-10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSliceDelete(slice.id);
-                    }}
-                    data-testid={`button-delete-slice-${slice.sliceNumber}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100 transition-opacity z-10">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-primary hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSliceDuplicate(slice.id);
+                      }}
+                      data-testid={`button-duplicate-slice-${slice.sliceNumber}`}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSliceDelete(slice.id);
+                      }}
+                      data-testid={`button-delete-slice-${slice.sliceNumber}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
 
                   <div className="absolute bottom-2 left-2 text-xs text-muted-foreground font-mono">
                     {slice.duration.toFixed(3)}s
