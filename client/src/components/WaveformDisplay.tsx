@@ -126,7 +126,10 @@ export default function WaveformDisplay({
 
     const newSlices = [...slices];
     const [removed] = newSlices.splice(draggedIndex, 1);
-    newSlices.splice(dropIndex, 0, removed);
+    
+    // Adjust drop index if dragging from before to after
+    const adjustedDropIndex = draggedIndex < dropIndex ? dropIndex - 1 : dropIndex;
+    newSlices.splice(adjustedDropIndex, 0, removed);
 
     onSlicesReorder(newSlices);
     setDraggedSliceId(null);
