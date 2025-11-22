@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 export interface Slice {
   id: string;
   sliceNumber: number;
+  sliceLabel: string;
+  colorHue: number;
   duration: number;
   startTime: number;
   endTime: number;
@@ -187,8 +189,12 @@ export default function WaveformDisplay({
                   style={pos}
                   data-testid={`slice-overlay-${slice.sliceNumber}`}
                 >
-                  <div className="absolute top-2 left-2 bg-accent text-accent-foreground text-xs font-mono px-2 py-0.5 rounded z-10">
-                    #{slice.sliceNumber}
+                  <div
+                    className="absolute top-2 left-2 text-white text-sm font-bold px-2.5 py-1 rounded z-10 shadow-md"
+                    style={{ backgroundColor: `hsl(${slice.colorHue}, 70%, 50%)` }}
+                    data-testid={`label-slice-${slice.sliceLabel}`}
+                  >
+                    {slice.sliceLabel}
                   </div>
                   
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
