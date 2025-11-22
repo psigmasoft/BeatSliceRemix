@@ -4,6 +4,7 @@ import AudioUploader from "@/components/AudioUploader";
 import WaveformDisplay, { Slice } from "@/components/WaveformDisplay";
 import ControlPanel from "@/components/ControlPanel";
 import { useToast } from "@/hooks/use-toast";
+import { AudioProcessor } from "@/utils/audioProcessor";
 
 export default function BeatSlicer() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -18,6 +19,8 @@ export default function BeatSlicer() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const audioProcessorRef = useRef<AudioProcessor | null>(null);
+  const rearrangedBufferRef = useRef<AudioBuffer | null>(null);
   const startTimeRef = useRef<number>(0);
   const pauseTimeRef = useRef<number>(0);
   
@@ -27,6 +30,7 @@ export default function BeatSlicer() {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     gainNodeRef.current = audioContextRef.current.createGain();
     gainNodeRef.current.connect(audioContextRef.current.destination);
+    audioProcessorRef.current = new AudioProcessor(audioContextRef.current);
     
     return () => {
       if (sourceNodeRef.current) {
@@ -82,8 +86,28 @@ export default function BeatSlicer() {
     }
   };
 
+  // Regenerate rearranged buffer when slices change
+  useEffect(() => {
+    if (!audioBuffer || !audioProcessorRef.current || slices.length === 0) {
+      rearrangedBufferRef.current = null;
+      return;
+    }
+
+    try {
+      rearrangedBufferRef.current = audioProcessorRef.current.createRearrangedBuffer(
+        audioBuffer,
+        slices
+      );
+    } catch (error) {
+      console.error('Error creating rearranged buffer:', error);
+      rearrangedBufferRef.current = null;
+    }
+  }, [audioBuffer, slices]);
+
   const handlePlayPause = () => {
-    if (!audioBuffer || !audioContextRef.current) return;
+    if (!audioContextRef.current) return;
+    const bufferToPlay = rearrangedBufferRef.current || audioBuffer;
+    if (!bufferToPlay) return;
 
     if (isPlaying) {
       if (sourceNodeRef.current) {
@@ -94,7 +118,7 @@ export default function BeatSlicer() {
       setIsPlaying(false);
     } else {
       const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBuffer;
+      source.buffer = bufferToPlay;
       source.connect(gainNodeRef.current!);
       source.loop = isLooping;
       
@@ -132,19 +156,38 @@ export default function BeatSlicer() {
   };
 
   const handleExport = () => {
-    if (!audioBuffer || slices.length === 0) return;
+    if (!audioProcessorRef.current || !rearrangedBufferRef.current) {
+      toast({
+        title: "Export failed",
+        description: "No rearranged audio available to export.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    toast({
-      title: "Export started",
-      description: "Creating rearranged audio file...",
-    });
+    try {
+      const wavBlob = audioProcessorRef.current.exportAsWav(rearrangedBufferRef.current);
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${audioFile?.name.replace(/\.[^/.]+$/, '') || 'rearranged'}_beat-sliced.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-    setTimeout(() => {
       toast({
         title: "Export complete",
         description: "Your rearranged beat has been downloaded!",
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export failed",
+        description: "Could not export audio file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSliceDelete = (id: string) => {
@@ -159,12 +202,14 @@ export default function BeatSlicer() {
 
     const interval = setInterval(() => {
       const elapsed = audioContextRef.current!.currentTime - startTimeRef.current;
-      if (audioBuffer) {
+      const bufferDuration = rearrangedBufferRef.current?.duration || audioBuffer?.duration || 0;
+      
+      if (bufferDuration > 0) {
         if (isLooping) {
-          setCurrentTime(elapsed % audioBuffer.duration);
+          setCurrentTime(elapsed % bufferDuration);
         } else {
           setCurrentTime(elapsed);
-          if (elapsed >= audioBuffer.duration) {
+          if (elapsed >= bufferDuration) {
             handleStop();
           }
         }
@@ -172,7 +217,7 @@ export default function BeatSlicer() {
     }, 50);
 
     return () => clearInterval(interval);
-  }, [isPlaying, audioBuffer, isLooping]);
+  }, [isPlaying, audioBuffer, isLooping, slices]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
