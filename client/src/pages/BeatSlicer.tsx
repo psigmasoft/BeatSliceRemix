@@ -251,6 +251,32 @@ export default function BeatSlicer() {
     setSlices(updateSliceNumbers(newSlices));
   };
 
+  const handleSliceClick = (slice: Slice) => {
+    if (!audioContextRef.current || !audioBuffer) return;
+
+    // Stop any currently playing audio
+    if (sourceNodeRef.current) {
+      sourceNodeRef.current.stop();
+      sourceNodeRef.current = null;
+    }
+    
+    // Create a new source and play the slice
+    const source = audioContextRef.current.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(gainNodeRef.current!);
+    
+    source.start(0, slice.startTime, slice.duration);
+    sourceNodeRef.current = source;
+    
+    // Auto-stop after slice duration
+    setTimeout(() => {
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.stop();
+        sourceNodeRef.current = null;
+      }
+    }, slice.duration * 1000);
+  };
+
   useEffect(() => {
     if (!isPlaying || !audioContextRef.current) return;
 
@@ -330,6 +356,7 @@ export default function BeatSlicer() {
                 onSlicesReorder={(newSlices) => setSlices(updateSliceNumbers(newSlices))}
                 onSliceDelete={handleSliceDelete}
                 onSliceDuplicate={handleSliceDuplicate}
+                onSliceClick={handleSliceClick}
               />
             </>
           )}

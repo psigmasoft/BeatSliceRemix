@@ -53,6 +53,7 @@ export default function WaveformDisplayExample() {
       onSlicesReorder={setSlices}
       onSliceDelete={(id) => setSlices(slices.filter(s => s.id !== id))}
       onSliceDuplicate={handleDuplicate}
+      onSliceClick={() => {}}
     />
   );
 }

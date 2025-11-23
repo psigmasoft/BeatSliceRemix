@@ -22,6 +22,7 @@ interface WaveformDisplayProps {
   onSlicesReorder: (slices: Slice[]) => void;
   onSliceDelete: (id: string) => void;
   onSliceDuplicate: (id: string) => void;
+  onSliceClick: (slice: Slice) => void;
 }
 
 export default function WaveformDisplay({
@@ -34,6 +35,7 @@ export default function WaveformDisplay({
   onSlicesReorder,
   onSliceDelete,
   onSliceDuplicate,
+  onSliceClick,
 }: WaveformDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -187,7 +189,10 @@ export default function WaveformDisplay({
                   onDragOver={(e) => handleDragOver(e, slice.id)}
                   onDrop={(e) => handleDrop(e, slice.id)}
                   onDragEnd={handleDragEnd}
-                  onClick={() => onSelectSlice(slice.id)}
+                  onClick={() => {
+                    onSelectSlice(slice.id);
+                    onSliceClick(slice);
+                  }}
                   className={`
                     absolute top-0 h-full border-2 cursor-move
                     transition-all duration-150
