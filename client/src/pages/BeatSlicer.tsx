@@ -5,6 +5,7 @@ import WaveformDisplay, { Slice } from "@/components/WaveformDisplay";
 import ControlPanel from "@/components/ControlPanel";
 import { useToast } from "@/hooks/use-toast";
 import { AudioProcessor } from "@/utils/audioProcessor";
+import { Button } from "@/components/ui/button";
 
 export default function BeatSlicer() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -15,6 +16,7 @@ export default function BeatSlicer() {
   const [isLooping, setIsLooping] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
+  const [sliceCount, setSliceCount] = useState(8);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -48,6 +50,25 @@ export default function BeatSlicer() {
     }
   }, [volume]);
 
+  const generateSlices = (buffer: AudioBuffer, count: number): Slice[] => {
+    const sliceDuration = buffer.duration / count;
+    const newSlices: Slice[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const hue = (i * 360) / count;
+      newSlices.push({
+        id: `slice-${i}`,
+        sliceNumber: i + 1,
+        colorHue: hue,
+        duration: sliceDuration,
+        startTime: i * sliceDuration,
+        endTime: (i + 1) * sliceDuration,
+      });
+    }
+    
+    return newSlices;
+  };
+
   const handleFileSelect = async (file: File) => {
     setAudioFile(file);
     
@@ -56,22 +77,7 @@ export default function BeatSlicer() {
       const buffer = await audioContextRef.current!.decodeAudioData(arrayBuffer);
       setAudioBuffer(buffer);
       
-      const sliceCount = 8;
-      const sliceDuration = buffer.duration / sliceCount;
-      const newSlices: Slice[] = [];
-      
-      for (let i = 0; i < sliceCount; i++) {
-        const hue = (i * 45) % 360;
-        newSlices.push({
-          id: `slice-${i}`,
-          sliceNumber: i + 1,
-          colorHue: hue,
-          duration: sliceDuration,
-          startTime: i * sliceDuration,
-          endTime: (i + 1) * sliceDuration,
-        });
-      }
-      
+      const newSlices = generateSlices(buffer, sliceCount);
       setSlices(newSlices);
       setCurrentTime(0);
       
@@ -84,6 +90,20 @@ export default function BeatSlicer() {
         title: "Error loading audio",
         description: "Could not decode audio file. Please try another file.",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleSliceCountChange = (newCount: number) => {
+    setSliceCount(newCount);
+    if (audioBuffer) {
+      const newSlices = generateSlices(audioBuffer, newCount);
+      setSlices(newSlices);
+      setCurrentTime(0);
+      
+      toast({
+        title: "Slices updated",
+        description: `Audio re-sliced into ${newCount} pieces`,
       });
     }
   };
@@ -254,7 +274,7 @@ export default function BeatSlicer() {
             <AudioUploader onFileSelect={handleFileSelect} />
           ) : (
             <>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">
                     {audioFile.name}
@@ -271,6 +291,23 @@ export default function BeatSlicer() {
                   >
                     Clear & load new file
                   </button>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Slice Count:</span>
+                  <div className="flex gap-2">
+                    {[4, 8, 16].map((count) => (
+                      <Button
+                        key={count}
+                        variant={sliceCount === count ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSliceCountChange(count)}
+                        data-testid={`button-slice-count-${count}`}
+                      >
+                        {count}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
               
