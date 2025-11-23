@@ -50,6 +50,14 @@ export default function BeatSlicer() {
     }
   }, [volume]);
 
+  const getSliceLabel = (index: number): string => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (index < letters.length) {
+      return letters[index];
+    }
+    return `${letters[index % letters.length]}${Math.floor(index / letters.length)}`;
+  };
+
   const generateSlices = (buffer: AudioBuffer, count: number): Slice[] => {
     const sliceDuration = buffer.duration / count;
     const newSlices: Slice[] = [];
@@ -59,6 +67,7 @@ export default function BeatSlicer() {
       newSlices.push({
         id: `slice-${i}`,
         sliceNumber: i + 1,
+        sliceLabel: getSliceLabel(i),
         colorHue: hue,
         duration: sliceDuration,
         startTime: i * sliceDuration,
@@ -213,9 +222,9 @@ export default function BeatSlicer() {
   };
 
   const updateSliceNumbers = (sliceArray: Slice[]) => {
-    return sliceArray.map((slice, index) => ({
+    // Update slice numbers but preserve the original sliceLabel identifiers
+    return sliceArray.map((slice) => ({
       ...slice,
-      sliceNumber: index + 1,
     }));
   };
 

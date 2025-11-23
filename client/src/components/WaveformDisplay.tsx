@@ -5,19 +5,12 @@ import { Button } from "@/components/ui/button";
 export interface Slice {
   id: string;
   sliceNumber: number;
+  sliceLabel: string;
   colorHue: number;
   duration: number;
   startTime: number;
   endTime: number;
 }
-
-const getSliceLabel = (index: number): string => {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  if (index < letters.length) {
-    return letters[index];
-  }
-  return `${letters[index % letters.length]}${Math.floor(index / letters.length)}`;
-};
 
 interface WaveformDisplayProps {
   audioBuffer: AudioBuffer | null;
@@ -199,9 +192,9 @@ export default function WaveformDisplay({
                   <div
                     className="absolute top-2 left-2 text-white text-sm font-bold px-2.5 py-1 rounded z-10 shadow-md"
                     style={{ backgroundColor: `hsl(${slice.colorHue}, 70%, 50%)` }}
-                    data-testid={`label-slice-${getSliceLabel(index)}`}
+                    data-testid={`label-slice-${slice.sliceLabel}`}
                   >
-                    {getSliceLabel(index)}
+                    {slice.sliceLabel}
                   </div>
                   
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
