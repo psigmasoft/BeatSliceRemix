@@ -130,15 +130,15 @@ export default function WaveformDisplay({
     const [removed] = newSlices.splice(draggedIndex, 1);
     
     // Calculate correct insertion position
-    // When removing an element, array indices shift
-    // If dragging from before drop target: insert at dropIndex - 1 to position after it
-    // If dragging from after drop target: insert at dropIndex to position before it  
+    // splice(index, 0, element) inserts BEFORE the position
+    // For dragging right (left to right): we want to insert after drop target
+    // For dragging left (right to left): we want to insert before drop target
     let insertIndex: number;
     if (draggedIndex < dropIndex) {
-      // Dragging right: insert at dropIndex (which becomes dropIndex - 1 in the shrunken array)
-      insertIndex = dropIndex - 1;
+      // Dragging right: after removing dragged element, insert at dropIndex to place after target
+      insertIndex = dropIndex;
     } else {
-      // Dragging left: insert at dropIndex (drop target position unchanged)
+      // Dragging left: insert at dropIndex to place before target
       insertIndex = dropIndex;
     }
     newSlices.splice(insertIndex, 0, removed);
