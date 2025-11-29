@@ -14,6 +14,7 @@ export interface Slice {
 
 interface WaveformDisplayProps {
   audioBuffer: AudioBuffer | null;
+  rearrangedBuffer: AudioBuffer | null;
   slices: Slice[];
   currentTime: number;
   duration: number;
@@ -27,6 +28,7 @@ interface WaveformDisplayProps {
 
 export default function WaveformDisplay({
   audioBuffer,
+  rearrangedBuffer,
   slices,
   currentTime,
   duration,
@@ -44,17 +46,18 @@ export default function WaveformDisplay({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !audioBuffer) return;
+    const bufferToRender = rearrangedBuffer || audioBuffer;
+    if (!canvas || !bufferToRender) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-    
+
     ctx.scale(dpr, dpr);
 
     const width = rect.width;
@@ -63,7 +66,7 @@ export default function WaveformDisplay({
     ctx.fillStyle = 'hsl(220, 12%, 16%)';
     ctx.fillRect(0, 0, width, height);
 
-    const channelData = audioBuffer.getChannelData(0);
+    const channelData = bufferToRender.getChannelData(0);
     const step = Math.ceil(channelData.length / width);
     const amp = height / 2;
 
@@ -74,11 +77,11 @@ export default function WaveformDisplay({
     for (let i = 0; i < width; i++) {
       const min = channelData.slice(i * step, (i + 1) * step).reduce((a, b) => Math.min(a, b), 0);
       const max = channelData.slice(i * step, (i + 1) * step).reduce((a, b) => Math.max(a, b), 0);
-      
+
       ctx.moveTo(i, (1 + min) * amp);
       ctx.lineTo(i, (1 + max) * amp);
     }
-    
+
     ctx.stroke();
 
     slices.forEach((slice, index) => {
@@ -102,7 +105,7 @@ export default function WaveformDisplay({
       ctx.lineTo(x, height);
       ctx.stroke();
     }
-  }, [audioBuffer, slices, currentTime, duration]);
+  }, [audioBuffer, rearrangedBuffer, slices, currentTime, duration]);
 
   const handleDragStart = (e: React.DragEvent, sliceId: string) => {
     setDraggedSliceId(sliceId);
@@ -130,7 +133,7 @@ export default function WaveformDisplay({
 
     const newSlices = [...slices];
     const [removed] = newSlices.splice(draggedIndex, 1);
-    
+
     // Calculate correct insertion position
     // splice(index, 0, element) inserts BEFORE the position
     // For dragging right (left to right): we want to insert after drop target
@@ -172,7 +175,7 @@ export default function WaveformDisplay({
           style={{ display: 'block' }}
           data-testid="canvas-waveform"
         />
-        
+
         <div className="absolute inset-0">
           <div className="relative w-full h-full">
             {slices.map((slice, index) => {
@@ -180,7 +183,7 @@ export default function WaveformDisplay({
               const isSelected = selectedSliceId === slice.id;
               const isDragging = draggedSliceId === slice.id;
               const isDragOver = dragOverSliceId === slice.id;
-              
+
               return (
                 <div
                   key={slice.id}
@@ -211,7 +214,7 @@ export default function WaveformDisplay({
                   >
                     {slice.sliceLabel}
                   </div>
-                  
+
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                     <GripVertical className="h-8 w-8 text-foreground" />
                   </div>
