@@ -1,15 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
-  Play,
-  Pause,
-  Square,
-  Download,
-  Volume2,
-  Repeat,
-  Shuffle,
-  Dices,
-} from "lucide-react";
+   Play,
+   Pause,
+   Square,
+   Download,
+   Volume2,
+   Repeat,
+   Shuffle,
+ } from "lucide-react";
 
 interface ControlPanelProps {
   isPlaying: boolean;
@@ -22,28 +21,24 @@ interface ControlPanelProps {
   duration: number;
   isLooping: boolean;
   onLoopToggle: () => void;
-  randomisationMode: "shuffle" | "randomise" | null;
-  onRandomise: () => void;
+  randomisationMode: "shuffle" | null;
   onShuffle: () => void;
-  onDoneRandomise: () => void;
 }
 
 export default function ControlPanel({
-  isPlaying,
-  onPlayPause,
-  onStop,
-  onExport,
-  volume,
-  onVolumeChange,
-  currentTime,
-  duration,
-  isLooping,
-  onLoopToggle,
-  randomisationMode,
-  onRandomise,
-  onShuffle,
-  onDoneRandomise,
-}: ControlPanelProps) {
+   isPlaying,
+   onPlayPause,
+   onStop,
+   onExport,
+   volume,
+   onVolumeChange,
+   currentTime,
+   duration,
+   isLooping,
+   onLoopToggle,
+   randomisationMode,
+   onShuffle,
+ }: ControlPanelProps) {
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -94,42 +89,16 @@ export default function ControlPanel({
               <Repeat className="h-4 w-4" />
             </Button>
 
-            {!randomisationMode && (
-              <>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={onShuffle}
-                  title="Shuffle slice order"
-                  className="transition-all duration-200 hover:scale-110 active:scale-95 h-10 w-10"
-                  data-testid="button-shuffle"
-                >
-                  <Shuffle className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={onRandomise}
-                  title="Randomise slice segments"
-                  className="transition-all duration-200 hover:scale-110 active:scale-95 h-10 w-10"
-                  data-testid="button-randomise"
-                >
-                  <Dices className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-
-            {randomisationMode && (
-              <Button
-                size="sm"
-                variant="default"
-                onClick={onDoneRandomise}
-                className="ml-2 animate-pulse text-xs sm:text-sm"
-                data-testid="button-done-randomise"
-              >
-                Done
-              </Button>
-            )}
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={onShuffle}
+              title="Randomise slice order"
+              className="transition-all duration-200 hover:scale-110 active:scale-95 h-10 w-10"
+              data-testid="button-shuffle"
+            >
+              <Shuffle className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Time display and progress bar */}

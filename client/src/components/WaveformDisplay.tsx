@@ -25,23 +25,21 @@ interface WaveformDisplayProps {
   onSliceDelete: (id: string) => void;
   onSliceDuplicate: (id: string) => void;
   onSliceClick: (slice: Slice) => void;
-  randomisationMode?: 'shuffle' | 'randomise' | null;
 }
 
 export default function WaveformDisplay({
-  audioBuffer,
-  rearrangedBuffer,
-  slices,
-  currentTime,
-  duration,
-  selectedSliceId,
-  onSelectSlice,
-  onSlicesReorder,
-  onSliceDelete,
-  onSliceDuplicate,
-  onSliceClick,
-  randomisationMode,
-}: WaveformDisplayProps) {
+   audioBuffer,
+   rearrangedBuffer,
+   slices,
+   currentTime,
+   duration,
+   selectedSliceId,
+   onSelectSlice,
+   onSlicesReorder,
+   onSliceDelete,
+   onSliceDuplicate,
+   onSliceClick,
+ }: WaveformDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [draggedSliceId, setDraggedSliceId] = useState<string | null>(null);
@@ -237,9 +235,8 @@ export default function WaveformDisplay({
                      transition-all duration-150
                      ${isSelected ? 'border-chart-3 bg-chart-3/10' : 'border-accent/40 bg-accent/5'}
                      ${isDragging ? 'opacity-40' : ''}
-                     ${isDragOver && !isDragging ? 'border-primary bg-primary/10' : ''}
-                     ${randomisationMode ? 'shadow-lg shadow-purple-500/50' : ''}
-                     hover:bg-accent/15 active:opacity-60
+                       ${isDragOver && !isDragging ? 'border-primary bg-primary/10' : ''}
+                       hover:bg-accent/15 active:opacity-60
                    `}
                    style={pos}
                    data-testid={`slice-overlay-${slice.sliceNumber}`}

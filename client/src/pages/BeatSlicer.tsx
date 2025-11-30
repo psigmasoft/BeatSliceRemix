@@ -17,9 +17,6 @@ export default function BeatSlicer() {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [sliceCount, setSliceCount] = useState(8);
-  const [randomisationMode, setRandomisationMode] = useState<
-    "shuffle" | "randomise" | null
-  >(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -269,61 +266,12 @@ export default function BeatSlicer() {
     setSlices(updateSliceNumbers(newSlices));
   };
 
-  const shuffleSlices = (slicesToShuffle: Slice[]): Slice[] => {
-    return fisherYatesShuffle(slicesToShuffle);
-  };
-
-  const randomiseSlices = (buffer: AudioBuffer, count: number): Slice[] => {
-    // Generate random slice segments independent of original slicing
-    const sliceDuration = buffer.duration / count;
-    const randomSlices: Slice[] = [];
-
-    for (let i = 0; i < count; i++) {
-      // Generate random start time within available duration
-      const maxStartTime = Math.max(0, buffer.duration - sliceDuration);
-      const randomStartTime = Math.random() * maxStartTime;
-
-      const hue = (i * 360) / count;
-      randomSlices.push({
-        id: `random-slice-${i}-${Date.now()}`,
-        sliceNumber: i + 1,
-        sliceLabel: getSliceLabel(i),
-        colorHue: hue,
-        duration: sliceDuration,
-        startTime: randomStartTime,
-        endTime: randomStartTime + sliceDuration,
-      });
-    }
-
-    return randomSlices;
-  };
-
-  const handleRandomise = () => {
-    if (!audioBuffer) return;
-    const randomSlices = randomiseSlices(audioBuffer, sliceCount);
-    setSlices(randomSlices);
-    setRandomisationMode("randomise");
-    toast({
-      title: "Randomisation mode active",
-      description: "Random slice segments selected",
-    });
-  };
-
   const handleShuffle = () => {
-    const shuffledSlices = shuffleSlices(slices);
+    const shuffledSlices = fisherYatesShuffle(slices);
     setSlices(shuffledSlices);
-    setRandomisationMode("shuffle");
     toast({
-      title: "Shuffle mode active",
-      description: "Slice order randomised",
-    });
-  };
-
-  const handleDoneRandomise = () => {
-    setRandomisationMode(null);
-    toast({
-      title: "Randomisation mode disabled",
-      description: "Back to normal editing mode",
+      title: "Slice order randomised",
+      description: "Slices have been shuffled into a random order",
     });
   };
 
@@ -395,10 +343,9 @@ export default function BeatSlicer() {
                   <button
                     onClick={() => {
                       handleStop();
-                      setAudioFile(null);
-                      setAudioBuffer(null);
-                      setSlices([]);
-                      setRandomisationMode(null);
+                       setAudioFile(null);
+                       setAudioBuffer(null);
+                       setSlices([]);
                     }}
                     className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
                     data-testid="button-clear-audio"
@@ -442,7 +389,6 @@ export default function BeatSlicer() {
                 onSliceDelete={handleSliceDelete}
                 onSliceDuplicate={handleSliceDuplicate}
                 onSliceClick={handleSliceClick}
-                randomisationMode={randomisationMode}
               />
             </>
           )}
@@ -451,21 +397,19 @@ export default function BeatSlicer() {
 
       {audioFile && (
         <ControlPanel
-          isPlaying={isPlaying}
-          onPlayPause={handlePlayPause}
-          onStop={handleStop}
-          onExport={handleExport}
-          volume={volume}
-          onVolumeChange={setVolume}
-          currentTime={currentTime}
-          duration={audioBuffer?.duration || 0}
-          isLooping={isLooping}
-          onLoopToggle={handleLoopToggle}
-          randomisationMode={randomisationMode}
-          onRandomise={handleRandomise}
-          onShuffle={handleShuffle}
-          onDoneRandomise={handleDoneRandomise}
-        />
+             isPlaying={isPlaying}
+             onPlayPause={handlePlayPause}
+             onStop={handleStop}
+             onExport={handleExport}
+             volume={volume}
+             onVolumeChange={setVolume}
+             currentTime={currentTime}
+             duration={audioBuffer?.duration || 0}
+             isLooping={isLooping}
+             onLoopToggle={handleLoopToggle}
+             randomisationMode={null}
+             onShuffle={handleShuffle}
+           />
       )}
     </div>
   );
