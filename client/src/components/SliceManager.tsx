@@ -72,11 +72,11 @@ export default function SliceManager({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between px-2">
-        <div className="text-sm font-medium text-foreground">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 px-2">
+        <div className="text-xs sm:text-sm font-medium text-foreground">
           Slice Arrangement
-          <span className="ml-2 text-muted-foreground font-mono">
+          <span className="ml-2 text-muted-foreground font-mono text-xs">
             {slices.length} slices
           </span>
         </div>
@@ -87,15 +87,17 @@ export default function SliceManager({
             onClick={() => selectedSliceId && handleDuplicate(selectedSliceId)}
             disabled={!selectedSliceId}
             data-testid="button-duplicate-slice"
+            className="text-xs sm:text-sm"
           >
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
+            <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Duplicate</span>
+            <span className="sm:hidden">Dup</span>
           </Button>
         </div>
       </div>
 
-      <div className="bg-muted/30 rounded-md p-4 border border-border min-h-40">
-        <div className="flex flex-wrap gap-3">
+      <div className="bg-muted/30 rounded-md p-2 sm:p-4 border border-border min-h-32 sm:min-h-40 overflow-x-auto">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           {slices.map((slice, index) => (
             <div
               key={slice.id}
@@ -104,7 +106,7 @@ export default function SliceManager({
               onDragOver={(e) => handleDragOver(e, index)}
               onDrop={(e) => handleDrop(e, index)}
               className={`
-                transition-opacity
+                transition-opacity flex-shrink-0
                 ${dragOverIndex === index && draggedIndex !== index ? 'opacity-50' : ''}
               `}
             >

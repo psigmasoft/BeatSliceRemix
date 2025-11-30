@@ -34,13 +34,13 @@ export default function AudioUploader({ onFileSelect }: AudioUploaderProps) {
   };
 
   return (
-    <div className="flex items-center justify-center py-16">
+    <div className="flex items-center justify-center py-8 sm:py-16">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative w-full max-w-2xl h-52 rounded-md border-2 border-dashed
+          relative w-full max-w-2xl h-40 sm:h-52 rounded-md border-2 border-dashed
           transition-colors duration-200 hover-elevate
           ${isDragOver ? 'border-primary bg-primary/5' : 'border-border'}
         `}
@@ -52,17 +52,17 @@ export default function AudioUploader({ onFileSelect }: AudioUploaderProps) {
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           data-testid="input-audio-file"
         />
-        <div className="flex flex-col items-center justify-center h-full gap-4 pointer-events-none">
+        <div className="flex flex-col items-center justify-center h-full gap-3 sm:gap-4 pointer-events-none px-4">
           {isDragOver ? (
-            <FileAudio className="h-12 w-12 text-primary" />
+            <FileAudio className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
           ) : (
-            <Upload className="h-12 w-12 text-muted-foreground" />
+            <Upload className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
           )}
           <div className="text-center">
-            <p className="text-base font-medium text-foreground mb-1">
+            <p className="text-sm sm:text-base font-medium text-foreground mb-1">
               Drop your audio file here
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               or click to browse
             </p>
           </div>

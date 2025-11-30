@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GripVertical, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getEventCoordinates, isTouchEvent, preventTouchScroll } from "@/utils/touchEventUtils";
 
 export interface Slice {
   id: string;
@@ -24,6 +25,7 @@ interface WaveformDisplayProps {
   onSliceDelete: (id: string) => void;
   onSliceDuplicate: (id: string) => void;
   onSliceClick: (slice: Slice) => void;
+  randomisationMode?: 'shuffle' | 'randomise' | null;
 }
 
 export default function WaveformDisplay({
@@ -38,11 +40,14 @@ export default function WaveformDisplay({
   onSliceDelete,
   onSliceDuplicate,
   onSliceClick,
+  randomisationMode,
 }: WaveformDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [draggedSliceId, setDraggedSliceId] = useState<string | null>(null);
   const [dragOverSliceId, setDragOverSliceId] = useState<string | null>(null);
+  const dragStartPointRef = useRef<{ x: number; y: number } | null>(null);
+  const draggedElementRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -107,22 +112,46 @@ export default function WaveformDisplay({
     }
   }, [audioBuffer, rearrangedBuffer, slices, currentTime, duration]);
 
-  const handleDragStart = (e: React.DragEvent, sliceId: string) => {
+  const handleDragStart = (e: React.DragEvent | React.TouchEvent, element: HTMLElement, sliceId: string) => {
     setDraggedSliceId(sliceId);
-    e.dataTransfer.effectAllowed = 'move';
+    draggedElementRef.current = element;
+    
+    // Store start coordinates for touch events
+    const coordinates = isTouchEvent(e.nativeEvent)
+      ? getEventCoordinates(e.nativeEvent as TouchEvent)
+      : getEventCoordinates(e.nativeEvent as DragEvent);
+    dragStartPointRef.current = { x: coordinates.clientX, y: coordinates.clientY };
+
+    if (e instanceof React.DragEvent) {
+      e.dataTransfer.effectAllowed = 'move';
+    } else if (isTouchEvent(e.nativeEvent)) {
+      // Prevent scroll during touch drag
+      preventTouchScroll(e.nativeEvent as TouchEvent);
+    }
   };
 
-  const handleDragOver = (e: React.DragEvent, sliceId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+  const handleDragOver = (e: React.DragEvent | React.TouchEvent, sliceId: string) => {
+    if (e instanceof React.DragEvent) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    } else if (isTouchEvent(e.nativeEvent)) {
+      e.preventDefault();
+    }
     setDragOverSliceId(sliceId);
   };
 
-  const handleDrop = (e: React.DragEvent, dropSliceId: string) => {
-    e.preventDefault();
+  const handleDrop = (e: React.DragEvent | React.TouchEvent, dropSliceId: string) => {
+    if (e instanceof React.DragEvent) {
+      e.preventDefault();
+    } else if (isTouchEvent(e.nativeEvent)) {
+      e.preventDefault();
+    }
+
     if (!draggedSliceId || draggedSliceId === dropSliceId) {
       setDraggedSliceId(null);
       setDragOverSliceId(null);
+      dragStartPointRef.current = null;
+      draggedElementRef.current = null;
       return;
     }
 
@@ -151,11 +180,15 @@ export default function WaveformDisplay({
     onSlicesReorder(newSlices);
     setDraggedSliceId(null);
     setDragOverSliceId(null);
+    dragStartPointRef.current = null;
+    draggedElementRef.current = null;
   };
 
   const handleDragEnd = () => {
     setDraggedSliceId(null);
     setDragOverSliceId(null);
+    dragStartPointRef.current = null;
+    draggedElementRef.current = null;
   };
 
   const getSlicePosition = (index: number) => {
@@ -167,12 +200,12 @@ export default function WaveformDisplay({
   };
 
   return (
-    <div className="w-full bg-card rounded-md p-4 border border-card-border">
+    <div className="w-full bg-card rounded-md p-2 sm:p-4 border border-card-border overflow-x-auto">
       <div ref={containerRef} className="relative">
         <canvas
           ref={canvasRef}
-          className="w-full h-80 rounded"
-          style={{ display: 'block' }}
+          className="w-full h-48 sm:h-80 rounded"
+          style={{ display: 'block', minHeight: '12rem' }}
           data-testid="canvas-waveform"
         />
 
@@ -186,27 +219,31 @@ export default function WaveformDisplay({
 
               return (
                 <div
-                  key={slice.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, slice.id)}
-                  onDragOver={(e) => handleDragOver(e, slice.id)}
-                  onDrop={(e) => handleDrop(e, slice.id)}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => {
-                    onSelectSlice(slice.id);
-                    onSliceClick(slice);
-                  }}
-                  className={`
-                    absolute top-0 h-full border-2 cursor-move
-                    transition-all duration-150
-                    ${isSelected ? 'border-chart-3 bg-chart-3/10' : 'border-accent/40 bg-accent/5'}
-                    ${isDragging ? 'opacity-40' : ''}
-                    ${isDragOver && !isDragging ? 'border-primary bg-primary/10' : ''}
-                    hover:bg-accent/15
-                  `}
-                  style={pos}
-                  data-testid={`slice-overlay-${slice.sliceNumber}`}
-                >
+                   key={slice.id}
+                   draggable
+                   onDragStart={(e) => handleDragStart(e, e.currentTarget, slice.id)}
+                   onTouchStart={(e) => handleDragStart(e, e.currentTarget, slice.id)}
+                   onDragOver={(e) => handleDragOver(e, slice.id)}
+                   onTouchMove={(e) => handleDragOver(e, slice.id)}
+                   onDrop={(e) => handleDrop(e, slice.id)}
+                   onTouchEnd={(e) => handleDrop(e, slice.id)}
+                   onDragEnd={handleDragEnd}
+                   onClick={() => {
+                     onSelectSlice(slice.id);
+                     onSliceClick(slice);
+                   }}
+                   className={`
+                     absolute top-0 h-full border-2 cursor-move select-none touch-none
+                     transition-all duration-150
+                     ${isSelected ? 'border-chart-3 bg-chart-3/10' : 'border-accent/40 bg-accent/5'}
+                     ${isDragging ? 'opacity-40' : ''}
+                     ${isDragOver && !isDragging ? 'border-primary bg-primary/10' : ''}
+                     ${randomisationMode ? 'shadow-lg shadow-purple-500/50' : ''}
+                     hover:bg-accent/15 active:opacity-60
+                   `}
+                   style={pos}
+                   data-testid={`slice-overlay-${slice.sliceNumber}`}
+                 >
                   <div
                     className="absolute top-2 left-2 text-white text-sm font-bold px-2.5 py-1 rounded z-10 shadow-md"
                     style={{ backgroundColor: `hsl(${slice.colorHue}, 70%, 50%)` }}
@@ -219,30 +256,30 @@ export default function WaveformDisplay({
                     <GripVertical className="h-8 w-8 text-foreground" />
                   </div>
 
-                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 hover:opacity-100 transition-opacity z-10">
+                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex gap-1 opacity-0 hover:opacity-100 sm:hover:opacity-100 active:opacity-100 transition-opacity z-10">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6 text-primary hover:text-primary"
+                      className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:text-primary"
                       onClick={(e) => {
                         e.stopPropagation();
                         onSliceDuplicate(slice.id);
                       }}
                       data-testid={`button-duplicate-slice-${slice.sliceNumber}`}
                     >
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-4 sm:h-3 w-4 sm:w-3" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         onSliceDelete(slice.id);
                       }}
                       data-testid={`button-delete-slice-${slice.sliceNumber}`}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-5 sm:h-4 w-5 sm:w-4" />
                     </Button>
                   </div>
 

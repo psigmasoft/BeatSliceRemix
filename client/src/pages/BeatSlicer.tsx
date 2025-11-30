@@ -4,7 +4,7 @@ import AudioUploader from "@/components/AudioUploader";
 import WaveformDisplay, { Slice } from "@/components/WaveformDisplay";
 import ControlPanel from "@/components/ControlPanel";
 import { useToast } from "@/hooks/use-toast";
-import { AudioProcessor } from "@/utils/audioProcessor";
+import { AudioProcessor, fisherYatesShuffle } from "@/utils/audioProcessor";
 import { Button } from "@/components/ui/button";
 
 export default function BeatSlicer() {
@@ -17,19 +17,25 @@ export default function BeatSlicer() {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8);
   const [sliceCount, setSliceCount] = useState(8);
+  const [randomisationMode, setRandomisationMode] = useState<
+    "shuffle" | "randomise" | null
+  >(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const audioProcessorRef = useRef<AudioProcessor | null>(null);
-  const [rearrangedBuffer, setRearrangedBuffer] = useState<AudioBuffer | null>(null);
+  const [rearrangedBuffer, setRearrangedBuffer] = useState<AudioBuffer | null>(
+    null
+  );
   const startTimeRef = useRef<number>(0);
   const pauseTimeRef = useRef<number>(0);
 
   const { toast } = useToast();
 
   useEffect(() => {
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContextRef.current = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
     gainNodeRef.current = audioContextRef.current.createGain();
     gainNodeRef.current.connect(audioContextRef.current.destination);
     audioProcessorRef.current = new AudioProcessor(audioContextRef.current);
@@ -51,11 +57,13 @@ export default function BeatSlicer() {
   }, [volume]);
 
   const getSliceLabel = (index: number): string => {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     if (index < letters.length) {
       return letters[index];
     }
-    return `${letters[index % letters.length]}${Math.floor(index / letters.length)}`;
+    return `${letters[index % letters.length]}${Math.floor(
+      index / letters.length
+    )}`;
   };
 
   const generateSlices = (buffer: AudioBuffer, count: number): Slice[] => {
@@ -83,7 +91,9 @@ export default function BeatSlicer() {
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const buffer = await audioContextRef.current!.decodeAudioData(arrayBuffer);
+      const buffer = await audioContextRef.current!.decodeAudioData(
+        arrayBuffer
+      );
       setAudioBuffer(buffer);
 
       const newSlices = generateSlices(buffer, sliceCount);
@@ -92,7 +102,9 @@ export default function BeatSlicer() {
 
       toast({
         title: "Audio loaded",
-        description: `${file.name} - ${buffer.duration.toFixed(2)}s, ${sliceCount} slices created`,
+        description: `${file.name} - ${buffer.duration.toFixed(
+          2
+        )}s, ${sliceCount} slices created`,
       });
     } catch (error) {
       toast({
@@ -129,13 +141,11 @@ export default function BeatSlicer() {
     }
 
     try {
-      const newRearrangedBuffer = audioProcessorRef.current.createRearrangedBuffer(
-        audioBuffer,
-        slices
-      );
+      const newRearrangedBuffer =
+        audioProcessorRef.current.createRearrangedBuffer(audioBuffer, slices);
       setRearrangedBuffer(newRearrangedBuffer);
     } catch (error) {
-      console.error('Error creating rearranged buffer:', error);
+      console.error("Error creating rearranged buffer:", error);
       setRearrangedBuffer(null);
     }
   }, [audioBuffer, slices]);
@@ -158,7 +168,8 @@ export default function BeatSlicer() {
       source.connect(gainNodeRef.current!);
       source.loop = isLooping;
 
-      startTimeRef.current = audioContextRef.current.currentTime - pauseTimeRef.current;
+      startTimeRef.current =
+        audioContextRef.current.currentTime - pauseTimeRef.current;
       source.start(0, pauseTimeRef.current);
       sourceNodeRef.current = source;
 
@@ -204,9 +215,11 @@ export default function BeatSlicer() {
     try {
       const wavBlob = audioProcessorRef.current.exportAsWav(rearrangedBuffer);
       const url = URL.createObjectURL(wavBlob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `${audioFile?.name.replace(/\.[^/.]+$/, '') || 'rearranged'}_beat-sliced.wav`;
+      a.download = `${
+        audioFile?.name.replace(/\.[^/.]+$/, "") || "rearranged"
+      }_beat-sliced.wav`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -217,7 +230,7 @@ export default function BeatSlicer() {
         description: "Your rearranged beat has been downloaded!",
       });
     } catch (error) {
-      console.error('Export error:', error);
+      console.error("Export error:", error);
       toast({
         title: "Export failed",
         description: "Could not export audio file. Please try again.",
@@ -234,7 +247,7 @@ export default function BeatSlicer() {
   };
 
   const handleSliceDelete = (id: string) => {
-    const filtered = slices.filter(s => s.id !== id);
+    const filtered = slices.filter((s) => s.id !== id);
     setSlices(updateSliceNumbers(filtered));
     if (selectedSliceId === id) {
       setSelectedSliceId(null);
@@ -242,7 +255,7 @@ export default function BeatSlicer() {
   };
 
   const handleSliceDuplicate = (id: string) => {
-    const sliceIndex = slices.findIndex(s => s.id === id);
+    const sliceIndex = slices.findIndex((s) => s.id === id);
     if (sliceIndex === -1) return;
 
     const sliceToDuplicate = slices[sliceIndex];
@@ -254,6 +267,64 @@ export default function BeatSlicer() {
     const newSlices = [...slices];
     newSlices.splice(sliceIndex + 1, 0, newSlice);
     setSlices(updateSliceNumbers(newSlices));
+  };
+
+  const shuffleSlices = (slicesToShuffle: Slice[]): Slice[] => {
+    return fisherYatesShuffle(slicesToShuffle);
+  };
+
+  const randomiseSlices = (buffer: AudioBuffer, count: number): Slice[] => {
+    // Generate random slice segments independent of original slicing
+    const sliceDuration = buffer.duration / count;
+    const randomSlices: Slice[] = [];
+
+    for (let i = 0; i < count; i++) {
+      // Generate random start time within available duration
+      const maxStartTime = Math.max(0, buffer.duration - sliceDuration);
+      const randomStartTime = Math.random() * maxStartTime;
+
+      const hue = (i * 360) / count;
+      randomSlices.push({
+        id: `random-slice-${i}-${Date.now()}`,
+        sliceNumber: i + 1,
+        sliceLabel: getSliceLabel(i),
+        colorHue: hue,
+        duration: sliceDuration,
+        startTime: randomStartTime,
+        endTime: randomStartTime + sliceDuration,
+      });
+    }
+
+    return randomSlices;
+  };
+
+  const handleRandomise = () => {
+    if (!audioBuffer) return;
+    const randomSlices = randomiseSlices(audioBuffer, sliceCount);
+    setSlices(randomSlices);
+    setRandomisationMode("randomise");
+    toast({
+      title: "Randomisation mode active",
+      description: "Random slice segments selected",
+    });
+  };
+
+  const handleShuffle = () => {
+    const shuffledSlices = shuffleSlices(slices);
+    setSlices(shuffledSlices);
+    setRandomisationMode("shuffle");
+    toast({
+      title: "Shuffle mode active",
+      description: "Slice order randomised",
+    });
+  };
+
+  const handleDoneRandomise = () => {
+    setRandomisationMode(null);
+    toast({
+      title: "Randomisation mode disabled",
+      description: "Back to normal editing mode",
+    });
   };
 
   const handleSliceClick = (slice: Slice) => {
@@ -286,8 +357,10 @@ export default function BeatSlicer() {
     if (!isPlaying || !audioContextRef.current) return;
 
     const interval = setInterval(() => {
-      const elapsed = audioContextRef.current!.currentTime - startTimeRef.current;
-      const bufferDuration = rearrangedBuffer?.duration || audioBuffer?.duration || 0;
+      const elapsed =
+        audioContextRef.current!.currentTime - startTimeRef.current;
+      const bufferDuration =
+        rearrangedBuffer?.duration || audioBuffer?.duration || 0;
 
       if (bufferDuration > 0) {
         if (isLooping) {
@@ -309,14 +382,14 @@ export default function BeatSlicer() {
       <Header />
 
       <main className="flex-1 overflow-auto">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {!audioFile ? (
             <AudioUploader onFileSelect={handleFileSelect} />
           ) : (
             <>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+                  <h2 className="text-base sm:text-lg font-semibold text-foreground truncate flex-1">
                     {audioFile.name}
                   </h2>
                   <button
@@ -325,16 +398,19 @@ export default function BeatSlicer() {
                       setAudioFile(null);
                       setAudioBuffer(null);
                       setSlices([]);
+                      setRandomisationMode(null);
                     }}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
                     data-testid="button-clear-audio"
                   >
                     Clear & load new file
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">Slice Count:</span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                  <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                    Slice Count:
+                  </span>
                   <div className="flex gap-2">
                     {[4, 8, 16].map((count) => (
                       <Button
@@ -343,6 +419,7 @@ export default function BeatSlicer() {
                         size="sm"
                         onClick={() => handleSliceCountChange(count)}
                         data-testid={`button-slice-count-${count}`}
+                        className="text-xs sm:text-sm"
                       >
                         {count}
                       </Button>
@@ -359,10 +436,13 @@ export default function BeatSlicer() {
                 duration={audioBuffer?.duration || 0}
                 selectedSliceId={selectedSliceId}
                 onSelectSlice={setSelectedSliceId}
-                onSlicesReorder={(newSlices) => setSlices(updateSliceNumbers(newSlices))}
+                onSlicesReorder={(newSlices) =>
+                  setSlices(updateSliceNumbers(newSlices))
+                }
                 onSliceDelete={handleSliceDelete}
                 onSliceDuplicate={handleSliceDuplicate}
                 onSliceClick={handleSliceClick}
+                randomisationMode={randomisationMode}
               />
             </>
           )}
@@ -381,6 +461,10 @@ export default function BeatSlicer() {
           duration={audioBuffer?.duration || 0}
           isLooping={isLooping}
           onLoopToggle={handleLoopToggle}
+          randomisationMode={randomisationMode}
+          onRandomise={handleRandomise}
+          onShuffle={handleShuffle}
+          onDoneRandomise={handleDoneRandomise}
         />
       )}
     </div>

@@ -17,6 +17,9 @@ A powerful beat-slicing audio manipulation tool inspired by the Amen break rearr
   - Volume control
   - Real-time playback position indicator
 - **Export**: Download your rearranged beat as a WAV file with the original loop duration maintained
+- **Randomisation Mode**:
+  - **Shuffle**: Randomly reorder existing slices for instant variations
+  - **Randomise**: Generate new slices with random segment positions throughout the audio for entirely new compositions
 
 ## Tech Stack
 
@@ -85,7 +88,11 @@ This creates optimized production builds in the `dist` directory.
 3. **Preview Slices**: Click on any slice to hear just that segment
 4. **Reorder**: Drag slices on the waveform to rearrange them in your desired order
 5. **Refine**: Delete unwanted slices or duplicate slices for variation
-6. **Export**: Click Export to download your rearranged beat as a WAV file
+6. **Randomise** (Optional):
+   - **Shuffle**: Click the shuffle button to randomly reorder your current slices. Each click generates a new random arrangement
+   - **Randomise**: Click the dice button to generate entirely new slices at random positions throughout the audio
+   - Click **Done** to exit randomisation mode and return to normal editing
+7. **Export**: Click Export to download your rearranged beat as a WAV file
 
 ## Project Structure
 
@@ -114,6 +121,12 @@ The application uses the Web Audio API to:
 - Extract audio waveform data for visualization
 - Slice and rearrange audio buffers
 - Export processed audio as WAV files
+
+### Randomisation Algorithms
+
+**Shuffle Mode**: Uses the Fisher-Yates shuffle algorithm to randomly reorder slices. This algorithm ensures a uniform distribution of possible arrangements, producing different results on each activation.
+
+**Randomise Mode**: Generates new slices with independently random start positions within the audio duration. Each slice maintains its configured duration but starts at a pseudo-random point, allowing overlapping slices and creating entirely new compositional possibilities.
 
 ## Contributing
 

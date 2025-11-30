@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import WaveformDisplay, { Slice } from '../WaveformDisplay';
+import { useState } from "react";
+import WaveformDisplay, { Slice } from "../WaveformDisplay";
 
 export default function WaveformDisplayExample() {
   const mockAudioBuffer = {
@@ -19,21 +19,56 @@ export default function WaveformDisplayExample() {
   } as unknown as AudioBuffer;
 
   const [slices, setSlices] = useState<Slice[]>([
-    { id: '1', sliceNumber: 1, sliceLabel: 'A', colorHue: 0, duration: 0.25, startTime: 0, endTime: 0.25 },
-    { id: '2', sliceNumber: 2, sliceLabel: 'B', colorHue: 120, duration: 0.25, startTime: 0.25, endTime: 0.5 },
-    { id: '3', sliceNumber: 3, sliceLabel: 'C', colorHue: 240, duration: 0.25, startTime: 0.5, endTime: 0.75 },
-    { id: '4', sliceNumber: 4, sliceLabel: 'D', colorHue: 60, duration: 0.25, startTime: 0.75, endTime: 1.0 },
+    {
+      id: "1",
+      sliceNumber: 1,
+      sliceLabel: "A",
+      colorHue: 0,
+      duration: 0.25,
+      startTime: 0,
+      endTime: 0.25,
+    },
+    {
+      id: "2",
+      sliceNumber: 2,
+      sliceLabel: "B",
+      colorHue: 120,
+      duration: 0.25,
+      startTime: 0.25,
+      endTime: 0.5,
+    },
+    {
+      id: "3",
+      sliceNumber: 3,
+      sliceLabel: "C",
+      colorHue: 240,
+      duration: 0.25,
+      startTime: 0.5,
+      endTime: 0.75,
+    },
+    {
+      id: "4",
+      sliceNumber: 4,
+      sliceLabel: "D",
+      colorHue: 60,
+      duration: 0.25,
+      startTime: 0.75,
+      endTime: 1.0,
+    },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handleDuplicate = (id: string) => {
-    const sliceIndex = slices.findIndex(s => s.id === id);
+    const sliceIndex = slices.findIndex((s) => s.id === id);
     if (sliceIndex === -1) return;
-    
-    const newSlice = { ...slices[sliceIndex], id: `${slices[sliceIndex].id}-dup` };
+
+    const newSlice = {
+      ...slices[sliceIndex],
+      id: `${slices[sliceIndex].id}-dup`,
+    };
     const newSlices = [...slices];
     newSlices.splice(sliceIndex + 1, 0, newSlice);
-    
+
     // Update slice numbers for all slices
     const updatedSlices = newSlices.map((slice, index) => ({
       ...slice,
@@ -45,15 +80,17 @@ export default function WaveformDisplayExample() {
   return (
     <WaveformDisplay
       audioBuffer={mockAudioBuffer}
+      rearrangedBuffer={null}
       slices={slices}
       currentTime={0.3}
       duration={1.0}
       selectedSliceId={selectedId}
       onSelectSlice={setSelectedId}
       onSlicesReorder={setSlices}
-      onSliceDelete={(id) => setSlices(slices.filter(s => s.id !== id))}
+      onSliceDelete={(id) => setSlices(slices.filter((s) => s.id !== id))}
       onSliceDuplicate={handleDuplicate}
       onSliceClick={() => {}}
+      randomisationMode={null}
     />
   );
 }
