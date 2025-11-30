@@ -1,0 +1,34 @@
+feat: add slice randomisation feature with shuffle and randomise modes
+
+Implement comprehensive randomisation feature for BeatSliceRemix with two distinct modes:
+
+## Features
+- Shuffle Mode: Randomly reorder existing slices using Fisher-Yates algorithm
+- Randomise Mode: Generate new slices with random start positions throughout audio
+- Visual feedback: Purple shadow glow effect on slices during randomisation
+- Button animations: Hover scale (110%), press scale (95%), pulse effect on Done button
+- Toast notifications for mode activation/deactivation
+- State cleanup when loading new audio files
+
+## Implementation Details
+- Added randomisationMode state management to BeatSlicer.tsx
+- Fisher-Yates shuffle algorithm as reusable utility (audioProcessor.ts)
+- Updated ControlPanel with Shuffle and Dices buttons
+- Updated WaveformDisplay with visual mode indicators
+- Unit tests for shuffle algorithm (7 test cases)
+- Documentation in README.md
+
+## Files Modified
+- client/src/pages/BeatSlicer.tsx: State, handlers, randomise/shuffle logic
+- client/src/components/ControlPanel.tsx: Buttons, callbacks, animations
+- client/src/components/WaveformDisplay.tsx: Mode indicator styling
+- client/src/utils/audioProcessor.ts: Fisher-Yates algorithm
+- client/src/utils/audioProcessor.test.ts: Unit tests
+- client/src/components/examples/*: Updated for type safety
+- README.md: Feature documentation and usage guide
+- IMPLEMENTATION_NOTES.md: Technical implementation details
+
+## Type Safety
+- All TypeScript interfaces updated
+- Example components match new prop signatures
+- No breaking changes to existing functionality
