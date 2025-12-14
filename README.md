@@ -128,9 +128,31 @@ The application uses the Web Audio API to:
 
 **Randomise Mode**: Generates new slices with independently random start positions within the audio duration. Each slice maintains its configured duration but starts at a pseudo-random point, allowing overlapping slices and creating entirely new compositional possibilities.
 
+## Development Documentation
+
+Detailed documentation for developers working on this project. See **[docs/INDEX.md](docs/INDEX.md)** for a complete guide.
+
+### Core Architecture & Data Models
+- **[Slice Data Model](docs/SLICE_DATA_MODEL.md)** - Understanding how slices work and why `startTime`/`endTime` are immutable
+- **[Developer Notes on Slices](docs/DEVELOPER_NOTES_SLICES.md)** - Quick reference guide for working with slices
+
+### Drag and Drop Features
+- **[Drag Testing Strategy](docs/DRAG_TESTING_STRATEGY.md)** - Comprehensive testing approach for cross-browser support (desktop & mobile)
+- **[Quick Test Checklist](docs/DRAG_QUICK_TEST.md)** - Manual testing checklist for drag functionality
+- **[Drag Regression Report](docs/DRAG_REGRESSION_REPORT.md)** - Details of a past regression, how it was fixed, and how to prevent recurrence
+- **[Test Suite Documentation](docs/SLICE_DRAG_WAVEFORM_TESTS.md)** - Automated test details and coverage
+
+### Running Tests
+
+```bash
+npm test -- WaveformDisplay.test.tsx
+```
+
+This runs the automated drag and reordering tests that prevent regressions.
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Before working on slice reordering or audio manipulation features, please review the [Slice Data Model](docs/SLICE_DATA_MODEL.md) documentation to understand the architecture.
 
 ## License
 

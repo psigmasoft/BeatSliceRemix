@@ -237,10 +237,10 @@ export default function BeatSlicer() {
   };
 
   const updateSliceNumbers = (sliceArray: Slice[]) => {
-    // Update slice numbers but preserve the original sliceLabel identifiers
-    return sliceArray.map((slice) => ({
-      ...slice,
-    }));
+    // Simply return the array as-is
+    // startTime/endTime represent positions in ORIGINAL audio and must NOT change when reordering
+    // Only the array order changes, which determines playback sequence
+    return sliceArray;
   };
 
   const handleSliceDelete = (id: string) => {
@@ -273,6 +273,44 @@ export default function BeatSlicer() {
       title: "Slice order randomised",
       description: "Slices have been shuffled into a random order",
     });
+  };
+
+  const loadDefaultAudio = async (filename: string) => {
+    try {
+      // Stop any playing audio
+      handleStop();
+
+      // Fetch the audio file from the public directory
+      const response = await fetch(`/DEFAULT_LOOPS/${filename}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load ${filename}`);
+      }
+
+      // Convert response to blob and then to a File object
+      const blob = await response.blob();
+      const file = new File([blob], filename, { type: blob.type });
+
+      // Clear existing state
+      setAudioFile(null);
+      setAudioBuffer(null);
+      setSlices([]);
+      setRearrangedBuffer(null);
+
+      // Process the file like a normal upload
+      handleFileSelect(file);
+
+      toast({
+        title: "Default audio loaded",
+        description: `${filename} has been loaded and processed`,
+      });
+    } catch (error) {
+      console.error("Error loading default audio:", error);
+      toast({
+        title: "Error loading default audio",
+        description: `Could not load ${filename}. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSliceClick = (slice: Slice) => {
@@ -332,7 +370,29 @@ export default function BeatSlicer() {
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {!audioFile ? (
-            <AudioUploader onFileSelect={handleFileSelect} />
+            <>
+              <div className="flex justify-end mb-4">
+                <div className="flex gap-2 sm:gap-3">
+                  <Button
+                    variant="default"
+                    onClick={() => loadDefaultAudio("SummerHaze.wav")}
+                    className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                    data-testid="button-load-summer-haze"
+                  >
+                    summer haze
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={() => loadDefaultAudio("EliphinoBreak.wav")}
+                    className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                    data-testid="button-load-eliphino"
+                  >
+                    eliphino
+                  </Button>
+                </div>
+              </div>
+              <AudioUploader onFileSelect={handleFileSelect} />
+            </>
           ) : (
             <>
               <div className="space-y-3 sm:space-y-4">
@@ -340,18 +400,38 @@ export default function BeatSlicer() {
                   <h2 className="text-base sm:text-lg font-semibold text-foreground truncate flex-1">
                     {audioFile.name}
                   </h2>
-                  <button
-                    onClick={() => {
-                      handleStop();
-                       setAudioFile(null);
-                       setAudioBuffer(null);
-                       setSlices([]);
-                    }}
-                    className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
-                    data-testid="button-clear-audio"
-                  >
-                    Clear & load new file
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-end sm:items-center">
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        handleStop();
+                        setAudioFile(null);
+                        setAudioBuffer(null);
+                        setSlices([]);
+                        setRearrangedBuffer(null);
+                      }}
+                      className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                      data-testid="button-clear-audio"
+                    >
+                      clear
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={() => loadDefaultAudio("SummerHaze.wav")}
+                      className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                      data-testid="button-load-summer-haze"
+                    >
+                      summer haze
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={() => loadDefaultAudio("EliphinoBreak.wav")}
+                      className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
+                      data-testid="button-load-eliphino"
+                    >
+                      eliphino
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
@@ -397,19 +477,19 @@ export default function BeatSlicer() {
 
       {audioFile && (
         <ControlPanel
-             isPlaying={isPlaying}
-             onPlayPause={handlePlayPause}
-             onStop={handleStop}
-             onExport={handleExport}
-             volume={volume}
-             onVolumeChange={setVolume}
-             currentTime={currentTime}
-             duration={audioBuffer?.duration || 0}
-             isLooping={isLooping}
-             onLoopToggle={handleLoopToggle}
-             randomisationMode={null}
-             onShuffle={handleShuffle}
-           />
+          isPlaying={isPlaying}
+          onPlayPause={handlePlayPause}
+          onStop={handleStop}
+          onExport={handleExport}
+          volume={volume}
+          onVolumeChange={setVolume}
+          currentTime={currentTime}
+          duration={audioBuffer?.duration || 0}
+          isLooping={isLooping}
+          onLoopToggle={handleLoopToggle}
+          randomisationMode={null}
+          onShuffle={handleShuffle}
+        />
       )}
     </div>
   );

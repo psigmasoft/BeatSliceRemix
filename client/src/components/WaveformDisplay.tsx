@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { GripVertical, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getEventCoordinates, isTouchEvent, preventTouchScroll } from "@/utils/touchEventUtils";
@@ -120,8 +120,8 @@ export default function WaveformDisplay({
       : getEventCoordinates(e.nativeEvent as DragEvent);
     dragStartPointRef.current = { x: coordinates.clientX, y: coordinates.clientY };
 
-    if (e instanceof React.DragEvent) {
-      e.dataTransfer.effectAllowed = 'move';
+    if ('dataTransfer' in e) {
+      (e as React.DragEvent).dataTransfer.effectAllowed = 'move';
     } else if (isTouchEvent(e.nativeEvent)) {
       // Prevent scroll during touch drag
       preventTouchScroll(e.nativeEvent as TouchEvent);
@@ -129,9 +129,9 @@ export default function WaveformDisplay({
   };
 
   const handleDragOver = (e: React.DragEvent | React.TouchEvent, sliceId: string) => {
-    if (e instanceof React.DragEvent) {
+    if ('dataTransfer' in e) {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
+      (e as React.DragEvent).dataTransfer.dropEffect = 'move';
     } else if (isTouchEvent(e.nativeEvent)) {
       e.preventDefault();
     }
@@ -139,7 +139,7 @@ export default function WaveformDisplay({
   };
 
   const handleDrop = (e: React.DragEvent | React.TouchEvent, dropSliceId: string) => {
-    if (e instanceof React.DragEvent) {
+    if ('dataTransfer' in e) {
       e.preventDefault();
     } else if (isTouchEvent(e.nativeEvent)) {
       e.preventDefault();
@@ -160,20 +160,7 @@ export default function WaveformDisplay({
 
     const newSlices = [...slices];
     const [removed] = newSlices.splice(draggedIndex, 1);
-
-    // Calculate correct insertion position
-    // splice(index, 0, element) inserts BEFORE the position
-    // For dragging right (left to right): we want to insert after drop target
-    // For dragging left (right to left): we want to insert before drop target
-    let insertIndex: number;
-    if (draggedIndex < dropIndex) {
-      // Dragging right: after removing dragged element, insert at dropIndex to place after target
-      insertIndex = dropIndex;
-    } else {
-      // Dragging left: insert at dropIndex to place before target
-      insertIndex = dropIndex;
-    }
-    newSlices.splice(insertIndex, 0, removed);
+    newSlices.splice(dropIndex, 0, removed);
 
     onSlicesReorder(newSlices);
     setDraggedSliceId(null);

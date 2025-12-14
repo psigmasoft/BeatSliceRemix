@@ -145,7 +145,7 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
         document.createElement = originalCreateElement;
     });
 
-    it.skip('should trigger waveform re-render when slices are reordered via drag', async () => {
+    it('should trigger waveform re-render when slices are reordered via drag', async () => {
         const slices: Slice[] = [
             {
                 id: 'slice-1',
@@ -245,7 +245,8 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
         expect(canvas).toBeTruthy();
     });
 
-    it.skip('should update waveform with correct slice positions after drag', () => {
+    it('should update waveform with correct slice positions after drag', () => {
+        // Initial slice order in array
         const slices: Slice[] = [
             {
                 id: 'slice-1',
@@ -253,7 +254,7 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
                 sliceLabel: 'A',
                 colorHue: 0,
                 duration: 1.0,
-                startTime: 0,
+                startTime: 0,    // Position in original audio
                 endTime: 1.0,
             },
             {
@@ -262,7 +263,7 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
                 sliceLabel: 'B',
                 colorHue: 120,
                 duration: 2.0,
-                startTime: 1.0,
+                startTime: 1.0,   // Position in original audio
                 endTime: 3.0,
             },
             {
@@ -271,7 +272,7 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
                 sliceLabel: 'C',
                 colorHue: 240,
                 duration: 1.0,
-                startTime: 3.0,
+                startTime: 3.0,   // Position in original audio
                 endTime: 4.0,
             },
         ];
@@ -295,20 +296,21 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
             />
         );
 
-        // Verify initial slice positions
+        // Verify initial slice positions (based on array order)
         const slice1 = getByTestId('slice-overlay-1');
         const slice2 = getByTestId('slice-overlay-2');
         const slice3 = getByTestId('slice-overlay-3');
 
-        // Slice 1: 0-1s, should be at 0%, width 25%
+        // Array positions: [A(1s), B(2s), C(1s)] = total 4s
+        // Slice 1 (A): at position 0, width 25% (1/4)
         expect(slice1).toHaveStyle(`left: 0%`);
         expect(slice1).toHaveStyle(`width: 25%`);
 
-        // Slice 2: 1-3s, should be at 25%, width 50%
+        // Slice 2 (B): at position 25%, width 50% (2/4)
         expect(slice2).toHaveStyle(`left: 25%`);
         expect(slice2).toHaveStyle(`width: 50%`);
 
-        // Slice 3: 3-4s, should be at 75%, width 25%
+        // Slice 3 (C): at position 75%, width 25% (1/4)
         expect(slice3).toHaveStyle(`left: 75%`);
         expect(slice3).toHaveStyle(`width: 25%`);
     });
@@ -445,7 +447,7 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
         expect(onSlicesReorder).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('should not reorder when dragging slice onto itself', () => {
+    it('should not reorder when dragging slice onto itself', () => {
         const slices: Slice[] = [
             {
                 id: 'slice-1',
@@ -570,7 +572,80 @@ describe('WaveformDisplay - Slice Drag and Waveform Update', () => {
         expect(slice2).toHaveStyle(`width: 75%`);
     });
 
-    it.skip('should clear drag state after drop completes', () => {
+    it('should preserve slice audio positions (startTime/endTime) when reordering', () => {
+        const slices: Slice[] = [
+            {
+                id: 'slice-1',
+                sliceNumber: 1,
+                sliceLabel: 'A',
+                colorHue: 0,
+                duration: 1.0,
+                startTime: 0,     // Audio position - MUST NOT CHANGE
+                endTime: 1.0,
+            },
+            {
+                id: 'slice-2',
+                sliceNumber: 2,
+                sliceLabel: 'B',
+                colorHue: 120,
+                duration: 1.0,
+                startTime: 1.0,    // Audio position - MUST NOT CHANGE
+                endTime: 2.0,
+            },
+            {
+                id: 'slice-3',
+                sliceNumber: 3,
+                sliceLabel: 'C',
+                colorHue: 240,
+                duration: 1.0,
+                startTime: 2.0,    // Audio position - MUST NOT CHANGE
+                endTime: 3.0,
+            },
+        ];
+
+        const onSlicesReorder = vi.fn();
+        const { getByTestId } = render(
+            <WaveformDisplay
+                audioBuffer={mockAudioBuffer}
+                rearrangedBuffer={null}
+                slices={slices}
+                currentTime={0}
+                duration={3.0}
+                selectedSliceId={null}
+                onSelectSlice={vi.fn()}
+                onSlicesReorder={onSlicesReorder}
+                onSliceDelete={vi.fn()}
+                onSliceDuplicate={vi.fn()}
+                onSliceClick={vi.fn()}
+            />
+        );
+
+        // Drag slice 1 to position of slice 3
+        fireEvent.dragStart(getByTestId('slice-overlay-1'), {
+            dataTransfer: { effectAllowed: 'move' },
+        });
+        fireEvent.dragOver(getByTestId('slice-overlay-3'), {
+            dataTransfer: { dropEffect: 'move' },
+        });
+        fireEvent.drop(getByTestId('slice-overlay-3'), {
+            dataTransfer: {},
+        });
+
+        const reorderedSlices = onSlicesReorder.mock.calls[0][0];
+
+        // New order: [2, 3, 1]
+        expect(reorderedSlices[0].id).toBe('slice-2');
+        expect(reorderedSlices[1].id).toBe('slice-3');
+        expect(reorderedSlices[2].id).toBe('slice-1');
+
+        // CRITICAL: startTime/endTime must NOT change - they represent audio source positions
+        expect(reorderedSlices[2].startTime).toBe(0);  // Slice 1 still starts at 0 in original audio
+        expect(reorderedSlices[2].endTime).toBe(1.0);  // Slice 1 still ends at 1.0 in original audio
+        expect(reorderedSlices[0].startTime).toBe(1.0); // Slice 2 still starts at 1 in original audio
+        expect(reorderedSlices[0].endTime).toBe(2.0);
+    });
+
+    it('should clear drag state after drop completes', () => {
         const slices: Slice[] = [
             {
                 id: 'slice-1',

@@ -18,3 +18,12 @@ if (typeof globalThis !== 'undefined' && !globalThis.AudioContext) {
         }
     } as any;
 }
+
+// Add PointerEvent to global scope for tests
+if (typeof globalThis !== 'undefined' && !globalThis.PointerEvent) {
+    globalThis.PointerEvent = class PointerEvent extends Event {
+        constructor(type: string, init?: PointerEventInit) {
+            super(type, init);
+        }
+    } as any;
+}
